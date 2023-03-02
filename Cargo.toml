@@ -1,0 +1,17 @@
+[package]
+name = "ab-vcs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.69"
+clap = { version = "4.1.8", features = ["derive", "env", "wrap_help"] }
+image = "0.24.5"
+rayon = "1.6.1"
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = true
+strip = true
