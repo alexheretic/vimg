@@ -9,9 +9,13 @@ pub struct Args {
     #[arg(long, short)]
     pub columns: u32,
 
-    /// Width of each capture inside output. Will be scaled preserving aspect.
-    #[arg(long, short = 'w')]
+    /// Width of each capture inside the grid. Will be scaled preserving aspect.
+    #[arg(long, short = 'W')]
     pub capture_width: Option<u32>,
+
+    /// Height of each capture inside the grid. Will be scaled preserving aspect.
+    #[arg(long, short = 'H')]
+    pub capture_height: Option<u32>,
 
     /// Output file name.
     #[arg(long, short)]

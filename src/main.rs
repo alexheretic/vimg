@@ -19,6 +19,7 @@ fn main() -> anyhow::Result<()> {
         Command::Join(command::join::Args {
             columns,
             capture_width,
+            capture_height,
             output,
             capture_images,
         }) => {
@@ -27,7 +28,9 @@ fn main() -> anyhow::Result<()> {
             // load images concurrently
             let mut images: Vec<_> = capture_images
                 .par_iter()
-                .map(|i| load_image(i, capture_width).map_err(|e| anyhow!("{i:?}: {e}")))
+                .map(|i| {
+                    load_image(i, capture_width, capture_height).map_err(|e| anyhow!("{i:?}: {e}"))
+                })
                 .collect::<Result<Vec<_>, _>>()?;
 
             let img0 = images.remove(0);
@@ -66,11 +69,21 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn load_image(path: impl AsRef<Path>, resize_w: Option<u32>) -> anyhow::Result<DynamicImage> {
+fn load_image(
+    path: impl AsRef<Path>,
+    resize_w: Option<u32>,
+    resize_h: Option<u32>,
+) -> anyhow::Result<DynamicImage> {
     let path = path.as_ref();
     let mut img = image::io::Reader::open(path)?.decode()?;
-    if let Some(resize_w) = resize_w.filter(|w| *w != img.width()) {
-        img = img.resize(resize_w, u32::MAX, FilterType::CatmullRom);
+
+    if resize_h.is_some() || resize_w.is_some() {
+        img = img.resize(
+            resize_w.unwrap_or(u32::MAX),
+            resize_h.unwrap_or(u32::MAX),
+            FilterType::CatmullRom,
+        );
     }
+
     Ok(img)
 }
