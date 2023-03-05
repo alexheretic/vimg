@@ -6,8 +6,12 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.69"
 clap = { version = "4.1.8", features = ["derive", "env", "wrap_help"] }
+ffprobe = "0.3.3"
+humantime = "2.1"
 image = "0.24.5"
+indicatif = "0.17.3"
 rayon = "1.6.1"
+tempfile = "3.4.0"
 
 [profile.dev.package."*"]
 opt-level = 3
