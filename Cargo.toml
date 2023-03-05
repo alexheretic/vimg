@@ -1,16 +1,20 @@
 [package]
-name = "ab-vcs"
+name = "ab-vimg"
 version = "0.1.0"
+authors = ["Alex Butler <alexheretic@gmail.com>"]
 edition = "2021"
+description = "Animated video contact sheet (vcs) cli"
 
 [dependencies]
 anyhow = "1.0.69"
 clap = { version = "4.1.8", features = ["derive", "env", "wrap_help"] }
 ffprobe = "0.3.3"
+glyph_brush_layout = "0.2.3"
 humantime = "2.1"
 image = "0.24.5"
 indicatif = "0.17.3"
 rayon = "1.6.1"
+shell-escape = "0.1.5"
 tempfile = "3.4.0"
 
 [profile.dev.package."*"]

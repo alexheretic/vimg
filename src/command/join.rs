@@ -1,12 +1,11 @@
+pub mod label;
+
 use anyhow::anyhow;
 use image::GenericImage;
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 
 /// Join same-sized capture images into a single grid image.
-// TODO
-// * --label
-// * --padding
 #[derive(clap::Parser, Debug, Clone)]
 #[group(skip)]
 pub struct Join {
@@ -26,6 +25,9 @@ pub struct Join {
     #[arg(long, short)]
     pub output: PathBuf,
 
+    #[arg(long)]
+    pub label: Vec<String>,
+
     /// Images to join.
     #[arg(required = true)]
     pub capture_images: Vec<PathBuf>,
@@ -43,13 +45,12 @@ impl Join {
         let n_captures = capture_images.len() as u32;
 
         // load images concurrently
-        let mut images: Vec<_> = capture_images
+        let images: Vec<_> = capture_images
             .par_iter()
             .map(|i| self.load_image(i).map_err(|e| anyhow!("{i:?}: {e}")))
             .collect::<Result<Vec<_>, _>>()?;
 
-        let img0 = images.remove(0);
-        let (cap_w, cap_h) = (img0.width(), img0.height());
+        let (cap_w, cap_h) = (images[0].width(), images[0].height());
         let (rows, cols) = if *columns == 0 || n_captures <= *columns {
             (1, n_captures)
         } else {
@@ -60,20 +61,16 @@ impl Join {
             }
             (rows, *columns)
         };
-        // eprintln!(
-        //     "arranging in {cols}x{rows} grid of {cap_w}x{cap_h} images -> {}x{}px",
-        //     cap_w * cols,
-        //     cap_h * rows
-        // );
+
+        let mut labels = self.label.clone();
+        labels.resize_with(images.len(), String::new);
 
         let mut all = image::RgbaImage::new(cap_w * cols, cap_h * rows);
-        all.copy_from(&img0, 0, 0)?;
-        drop(img0);
-
-        for (idx, img) in images.into_iter().enumerate() {
-            let idx = idx as u32 + 1;
+        for (idx, (img, label)) in images.into_iter().zip(labels).enumerate() {
+            let idx = idx as u32;
             let x = (idx % cols) * cap_w;
             let y = (idx / cols) * cap_h;
+            let img = label::draw(img, &label, &label::Config::default())?;
             all.copy_from(&img, x as _, y as _)?;
         }
 

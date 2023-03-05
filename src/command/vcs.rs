@@ -1,4 +1,7 @@
-use crate::{command, process::CommandExt};
+use crate::{
+    command::{self, label},
+    process::CommandExt,
+};
 use anyhow::ensure;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use std::{path::PathBuf, process::Command, time::Duration};
@@ -6,7 +9,7 @@ use std::{path::PathBuf, process::Command, time::Duration};
 /// Create a new video contact sheet.
 #[derive(clap::Parser, Debug, Clone)]
 #[group(skip)]
-pub struct Create {
+pub struct Vcs {
     /// Number of capture columns in output.
     #[arg(long, short)]
     pub columns: u32,
@@ -15,17 +18,19 @@ pub struct Create {
     #[arg(long, short)]
     pub output: Option<PathBuf>,
 
-    /// crf quality level for encoding the output avif.
-    #[arg(long, default_value_t = 35)]
-    pub output_crf: u8,
+    /// Crf quality level for encoding the output avif.
+    #[arg(long, default_value_t = 30)]
+    pub avif_crf: u8,
 
-    /// preset/cpu-used for encoding the output avif.
-    #[arg(long, default_value_t = 6)]
-    pub output_preset: u8,
+    /// Preset/cpu-used for encoding the output avif.
+    ///
+    /// Default 1 for single-frame, 5 for multi-frame.
+    #[arg(long)]
+    pub avif_preset: Option<u8>,
 
     /// Output avif framerate for multi-frame outputs.
     #[arg(long, default_value_t = 20.0)]
-    pub output_fps: f32,
+    pub avif_fps: f32,
 
     /// Pixel width of each capture inside the grid. Will be scaled preserving aspect.
     #[arg(long, short = 'W', conflicts_with = "capture_height")]
@@ -39,7 +44,7 @@ pub struct Create {
     pub args: command::Extract,
 }
 
-impl Create {
+impl Vcs {
     pub fn run(mut self) -> anyhow::Result<()> {
         ensure!(
             self.output
@@ -92,38 +97,56 @@ impl Create {
                     })
                     .collect();
 
+                let label = extract
+                    .out_templates
+                    .iter()
+                    .map(|tmpl| label::seconds_text(tmpl.seconds))
+                    .collect();
+
                 command::Join {
                     columns: self.columns,
-                    capture_width: None,
-                    capture_height: None,
                     output: {
                         let mut o = temp_dir.path().to_path_buf();
                         o.push(format!("{file_prefix}-{f:0frame_w$}.bmp"));
                         o
                     },
                     capture_images,
+                    capture_width: None,
+                    capture_height: None,
+                    label,
                 }
                 .run()
             })?;
 
-        spinner.set_message("Encoding avif");
+        let out_file = self.output.unwrap_or_else(|| {
+            let mut o = parent_dir;
+            o.push(format!("{file_prefix}.avif"));
+            o
+        });
+
+        spinner.set_message(format!(
+            "Encoding {}",
+            shell_escape::escape(out_file.display().to_string().into())
+        ));
         let out = Command::new("ffmpeg")
-            .arg2("-r", self.output_fps)
+            .arg2("-r", self.avif_fps)
             .arg2("-i", {
                 let mut o = temp_dir.path().to_path_buf();
                 o.push(format!("{file_prefix}-%0{frame_w}d.bmp"));
                 o
             })
             .arg2("-c:v", "libaom-av1")
-            .arg2("-cpu-used", self.output_preset)
-            .arg2("-crf", self.output_crf)
+            .arg2(
+                "-cpu-used",
+                self.avif_preset.unwrap_or(match self.args.capture_frames {
+                    1 => 1,
+                    _ => 5,
+                }),
+            )
+            .arg2("-crf", self.avif_crf)
             .arg2("-pix_fmt", "yuv420p10le")
             .arg("-y")
-            .arg(self.output.unwrap_or_else(|| {
-                let mut o = parent_dir;
-                o.push(format!("{file_prefix}.avif"));
-                o
-            }))
+            .arg(out_file)
             .output()?;
         ensure!(
             out.status.success(),
