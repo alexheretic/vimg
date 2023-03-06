@@ -1,10 +1,14 @@
 use crate::{
-    command::{DurationOrPercent, HumanDuration},
+    command::{sh_escape, DurationOrPercent, HumanDuration},
     process::CommandExt,
 };
 use anyhow::{ensure, Context};
 use rayon::prelude::*;
-use std::{fmt, fs, path::PathBuf, process::Command};
+use std::{
+    fmt, fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 /// Generate capture bmp images from a video using ffmpeg.
 #[derive(clap::Parser, Debug, Clone)]
@@ -55,6 +59,7 @@ impl Extract {
             ignore_end,
             threads,
             video,
+            output_dir,
             ..
         } = self;
 
@@ -74,6 +79,14 @@ impl Extract {
             "invalid negative video duration minus offsets"
         );
 
+        let out_dir = match output_dir {
+            Some(dir) => {
+                fs::create_dir_all(dir)?;
+                dir.clone()
+            }
+            None => PathBuf::from("."),
+        };
+
         rayon::ThreadPoolBuilder::new()
             .num_threads(*threads)
             .build()?
@@ -92,7 +105,12 @@ impl Extract {
                     })
                     .collect::<anyhow::Result<Vec<_>>>()?;
 
-                Ok(ExtractData { out_templates })
+                let warnings = self.fix_missing(&out_templates, &out_dir)?;
+
+                Ok(ExtractData {
+                    out_templates,
+                    warnings,
+                })
             })
     }
 
@@ -122,11 +140,8 @@ impl Extract {
         );
 
         let mut out = match output_dir {
+            Some(dir) => dir.clone(),
             None => PathBuf::from("."),
-            Some(dir) => {
-                fs::create_dir_all(dir)?;
-                dir.clone()
-            }
         };
         out.push(out_template.to_string());
 
@@ -150,11 +165,50 @@ impl Extract {
 
         Ok(())
     }
+
+    /// Check extractions and fix missing. Returns a list of warnings.
+    ///
+    /// In fairly rare cases ffmpeg can fail to extract the expected number of frames.
+    /// Auto fixing will simply cover these missing frames with duplicates of the previous frame.
+    fn fix_missing(
+        &self,
+        extracts: &[OutTemplate],
+        temp_dir: &Path,
+    ) -> anyhow::Result<Vec<String>> {
+        let mut warnings = Vec::new();
+
+        // ensure all captures exist
+        for tmpl in extracts {
+            let mut first = temp_dir.to_path_buf();
+            first.push(tmpl.with_frame(1));
+            ensure!(first.is_file(), "Failed to extract: {}", sh_escape(&first));
+
+            let mut prev = first;
+            let mut fixes = 0;
+            for f in 2..=self.capture_frames {
+                let mut next = temp_dir.to_path_buf();
+                next.push(tmpl.with_frame(f));
+                if !next.is_file() {
+                    fs::hard_link(&prev, &next).or_else(|_| fs::copy(&prev, &next).map(|_| ()))?;
+                    fixes += 1;
+                }
+                prev = next;
+            }
+            if fixes != 0 {
+                warnings.push(format!(
+                    "Duplicated {fixes} captures to cover missing {tmpl} frames"
+                ));
+            }
+        }
+
+        Ok(warnings)
+    }
 }
 
 pub struct ExtractData {
     /// All ffmpeg capture output templates.
     pub out_templates: Vec<OutTemplate>,
+    pub warnings: Vec<String>,
 }
 
 /// "prefix-Ss-F.bmp" template.
@@ -173,8 +227,13 @@ impl OutTemplate {
     fn new(prefix: impl Into<String>, seconds: u32, max_seconds: u32, max_frames: u32) -> Self {
         let second_w = max_seconds.to_string().len();
         let frame_w = max_frames.to_string().len();
+        let mut prefix = prefix.into();
+        // try to avoid breaking the ffmpeg output template
+        if prefix.contains('%') {
+            prefix = prefix.replace('%', "");
+        }
         Self {
-            prefix: prefix.into(),
+            prefix,
             seconds,
             second_w,
             frame_w,

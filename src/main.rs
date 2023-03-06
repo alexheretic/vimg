@@ -17,7 +17,12 @@ fn main() -> anyhow::Result<()> {
     match action {
         Command::Vcs(c) => c.run()?,
         Command::Join(c) => c.run()?,
-        Command::Extract(c) => _ = c.run()?,
+        Command::Extract(c) => {
+            let ex = c.run()?;
+            for msg in ex.warnings {
+                eprintln!("Warning: {msg}");
+            }
+        }
     }
 
     Ok(())

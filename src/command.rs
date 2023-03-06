@@ -74,3 +74,7 @@ impl fmt::Display for HumanDuration {
         write!(f, "{}s", self.seconds)
     }
 }
+
+pub fn sh_escape(path: &std::path::Path) -> std::borrow::Cow<str> {
+    shell_escape::escape(path.display().to_string().into())
+}

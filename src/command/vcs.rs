@@ -1,15 +1,10 @@
 use crate::{
-    command::{self, label, ExtractData},
+    command::{self, label, sh_escape},
     process::CommandExt,
 };
 use anyhow::ensure;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    process::Command,
-    time::Duration,
-};
+use std::{path::PathBuf, process::Command, time::Duration};
 
 /// Create a new video contact sheet.
 #[derive(clap::Parser, Debug, Clone)]
@@ -47,6 +42,10 @@ pub struct Vcs {
 
     #[clap(flatten)]
     pub args: command::Extract,
+
+    /// Keep temporary files.
+    #[arg(long, default_value_t = false)]
+    pub keep: bool,
 }
 
 impl Vcs {
@@ -65,7 +64,16 @@ impl Vcs {
             .clone()
             .unwrap_or_else(|| PathBuf::from("."));
         let temp_dir = tempfile::tempdir_in(&parent_dir)?;
-        self.args.output_dir = Some(temp_dir.path().to_path_buf());
+        let temp_kept;
+        let temp_dir = match self.keep {
+            true => {
+                temp_kept = temp_dir.into_path(); // don't delete temp_dir on drop
+                temp_kept.as_path()
+            }
+            false => temp_dir.path(),
+        };
+
+        self.args.output_dir = Some(temp_dir.to_path_buf());
 
         let ex_scale = self.extract_scale();
         self.args.vfilter = match (self.args.vfilter, ex_scale) {
@@ -78,14 +86,19 @@ impl Vcs {
                 .template("{spinner:.cyan.bold} {elapsed_precise:.bold} {msg}")?,
         );
         spinner.enable_steady_tick(Duration::from_millis(100));
+
+        if self.keep {
+            spinner.println(format!(
+                "Keeping temporary files in {}",
+                sh_escape(temp_dir)
+            ));
+        }
+
         spinner.set_message("Extracting");
         let extract = self.args.run()?;
 
-        let fixes = self.check_extract(&extract, temp_dir.path())?;
-        if fixes > 0 {
-            spinner.println(format!(
-                "Warning: Duplicated {fixes} extract(s) to cover for missing frames"
-            ));
+        for msg in &extract.warnings {
+            spinner.println(format!("Warning: {msg}"));
         }
 
         spinner.set_message("Joining");
@@ -94,7 +107,8 @@ impl Vcs {
         let file_prefix = file_prefix
             .file_name()
             .unwrap_or_default()
-            .to_string_lossy();
+            .to_string_lossy()
+            .replace('%', "");
 
         (0..self.args.capture_frames)
             .into_par_iter()
@@ -103,7 +117,7 @@ impl Vcs {
                     .out_templates
                     .iter()
                     .map(|tmpl| {
-                        let mut o = temp_dir.path().to_path_buf();
+                        let mut o = temp_dir.to_path_buf();
                         o.push(tmpl.with_frame(f + 1));
                         o
                     })
@@ -118,7 +132,7 @@ impl Vcs {
                 command::Join {
                     columns: self.columns,
                     output: {
-                        let mut o = temp_dir.path().to_path_buf();
+                        let mut o = temp_dir.to_path_buf();
                         o.push(format!("{file_prefix}-{f:0frame_w$}.bmp"));
                         o
                     },
@@ -136,14 +150,11 @@ impl Vcs {
             o
         });
 
-        spinner.set_message(format!(
-            "Encoding {}",
-            shell_escape::escape(out_file.display().to_string().into())
-        ));
+        spinner.set_message(format!("Encoding {}", sh_escape(&out_file)));
         let out = Command::new("ffmpeg")
             .arg2("-r", self.avif_fps)
             .arg2("-i", {
-                let mut o = temp_dir.path().to_path_buf();
+                let mut o = temp_dir.to_path_buf();
                 o.push(format!("{file_prefix}-%0{frame_w}d.bmp"));
                 o
             })
@@ -176,45 +187,5 @@ impl Vcs {
         }
         let w = self.capture_width?;
         Some(format!("scale{w}:-1:flags=bicubic"))
-    }
-
-    /// In the cases we failed to extract every expect frame it may be possible to cover
-    /// a small amount of these by duplicating the previous frame. This case should be rare.
-    fn check_extract(&self, extract: &ExtractData, temp_dir: &Path) -> anyhow::Result<usize> {
-        /// Max number of fixes per template
-        const MAX_FIXES: usize = 6;
-
-        let mut total_fixes = 0;
-
-        // ensure all captures exist
-        for tmpl in &extract.out_templates {
-            let mut first = temp_dir.to_path_buf();
-            first.push(tmpl.with_frame(1));
-            ensure!(
-                first.is_file(),
-                "Failed to extract: {}",
-                shell_escape::escape(first.display().to_string().into())
-            );
-
-            let mut prev = first;
-            let mut fixes = 0;
-            for f in 2..=self.args.capture_frames {
-                let mut next = temp_dir.to_path_buf();
-                next.push(tmpl.with_frame(f));
-                if !next.is_file() {
-                    ensure!(
-                        fixes < MAX_FIXES,
-                        "Failed to extract (too many to fix): {}",
-                        shell_escape::escape(next.display().to_string().into())
-                    );
-                    fs::copy(&prev, &next)?;
-                    fixes += 1;
-                }
-                prev = next;
-            }
-            total_fixes += fixes;
-        }
-
-        Ok(total_fixes)
     }
 }
