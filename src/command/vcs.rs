@@ -29,15 +29,23 @@ pub struct Vcs {
     pub avif_preset: Option<u8>,
 
     /// Output avif framerate for multi-frame outputs.
-    #[arg(long, default_value_t = 20.0)]
+    ///
+    /// Example: The default 10fps will result in half-speed playback for
+    /// the default args: -f30 -t1500ms (30 frames over 1.5 seconds).
+    /// So using 20fps will result in realtime playback for: -f30 -t1500ms.
+    #[arg(long, default_value_t = 10.0)]
     pub avif_fps: f32,
 
     /// Pixel width of each capture inside the grid. Will be scaled preserving aspect.
+    ///
+    /// Use this or -H (not both).
     #[arg(long, short = 'W', conflicts_with = "capture_height")]
     pub capture_width: Option<u32>,
 
     /// Pixel height of each capture inside the grid. Will be scaled preserving aspect.
-    #[arg(long, short = 'H', conflicts_with = "capture_width")]
+    ///
+    /// Use this or -W (not both).
+    #[arg(long, short = 'H', conflicts_with = "capture_width", required = true)]
     pub capture_height: Option<u32>,
 
     #[clap(flatten)]
@@ -74,6 +82,7 @@ impl Vcs {
         };
 
         self.args.output_dir = Some(temp_dir.to_path_buf());
+        self.args.capture_frames = self.args.capture_frames.or(Some(30));
 
         let ex_scale = self.extract_scale();
         self.args.vfilter = match (self.args.vfilter, ex_scale) {
@@ -102,7 +111,7 @@ impl Vcs {
         }
 
         spinner.set_message("Joining");
-        let frame_w = self.args.capture_frames.to_string().len();
+        let frame_w = self.args.capture_frames().to_string().len();
         let file_prefix = self.args.video.with_extension("");
         let file_prefix = file_prefix
             .file_name()
@@ -110,7 +119,7 @@ impl Vcs {
             .to_string_lossy()
             .replace('%', "");
 
-        (0..self.args.capture_frames)
+        (0..self.args.capture_frames())
             .into_par_iter()
             .try_for_each(|f| {
                 let capture_images: Vec<_> = extract
@@ -161,10 +170,11 @@ impl Vcs {
             .arg2("-c:v", "libaom-av1")
             .arg2(
                 "-cpu-used",
-                self.avif_preset.unwrap_or(match self.args.capture_frames {
-                    1 => 1,
-                    _ => 5,
-                }),
+                self.avif_preset
+                    .unwrap_or(match self.args.capture_frames() {
+                        1 => 1,
+                        _ => 5,
+                    }),
             )
             .arg2("-crf", self.avif_crf)
             .arg2("-pix_fmt", "yuv420p10le")

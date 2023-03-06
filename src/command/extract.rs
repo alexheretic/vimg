@@ -27,8 +27,10 @@ pub struct Extract {
     pub ignore_end: DurationOrPercent,
 
     /// Number of frames to output for each capture (greater than 1 for animated captures).
-    #[arg(long, short = 'f', default_value_t = 1)]
-    pub capture_frames: u32,
+    ///
+    /// Defaults to 1 (extract), 30 (vcs).
+    #[arg(long, short = 'f')]
+    pub capture_frames: Option<u32>,
 
     /// Duration per capture for multi-frame captures.
     #[arg(long, short = 't', default_value = "1500ms")]
@@ -114,24 +116,28 @@ impl Extract {
             })
     }
 
+    pub fn capture_frames(&self) -> u32 {
+        self.capture_frames.unwrap_or(1)
+    }
+
     fn out_template(&self, start_s: f32, duration_s: f32) -> OutTemplate {
         let prefix = self.video.with_extension("");
         let prefix = prefix.file_name().unwrap_or_default().to_string_lossy();
 
-        OutTemplate::new(prefix, start_s as _, duration_s as _, self.capture_frames)
+        OutTemplate::new(prefix, start_s as _, duration_s as _, self.capture_frames())
     }
 
     fn capture(&self, start_s: f32, out_template: &OutTemplate) -> anyhow::Result<()> {
         let Self {
-            capture_frames,
             capture_time,
             vfilter,
             output_dir,
             video,
             ..
         } = self;
+        let capture_frames = self.capture_frames();
         ensure!(
-            *capture_frames > 0,
+            capture_frames > 0,
             "invalid capture-frames must be non-zero"
         );
         ensure!(
@@ -185,7 +191,7 @@ impl Extract {
 
             let mut prev = first;
             let mut fixes = 0;
-            for f in 2..=self.capture_frames {
+            for f in 2..=self.capture_frames() {
                 let mut next = temp_dir.to_path_buf();
                 next.push(tmpl.with_frame(f));
                 if !next.is_file() {
