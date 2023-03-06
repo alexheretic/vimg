@@ -134,7 +134,7 @@ impl Extract {
             .arg2("-t", capture_time.seconds)
             .arg2("-i", video)
             .arg2("-r", format!("{capture_frames}/{}", capture_time.seconds))
-            .arg2("-fps_mode", "vfr")
+            .arg2("-fps_mode", "cfr")
             .arg2_opt("-vf", vfilter.as_ref())
             .arg2("-vframes", capture_frames)
             .arg("-y")
