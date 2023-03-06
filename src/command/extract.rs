@@ -85,6 +85,7 @@ impl Extract {
                         let start_s = ignore_start.to_secs(video_duration_s)
                             + interval * 0.5
                             + interval * n as f32;
+                        let start_s = start_s.min(video_duration_s - self.capture_time.seconds);
                         let out_template = self.out_template(start_s, duration_s);
                         self.capture(start_s, &out_template)?;
                         Ok(out_template)

@@ -1,10 +1,15 @@
 use crate::{
-    command::{self, label},
+    command::{self, label, ExtractData},
     process::CommandExt,
 };
 use anyhow::ensure;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
-use std::{path::PathBuf, process::Command, time::Duration};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+    time::Duration,
+};
 
 /// Create a new video contact sheet.
 #[derive(clap::Parser, Debug, Clone)]
@@ -75,6 +80,13 @@ impl Vcs {
         spinner.enable_steady_tick(Duration::from_millis(100));
         spinner.set_message("Extracting");
         let extract = self.args.run()?;
+
+        let fixes = self.check_extract(&extract, temp_dir.path())?;
+        if fixes > 0 {
+            spinner.println(format!(
+                "Warning: Duplicated {fixes} extract(s) to cover for missing frames"
+            ));
+        }
 
         spinner.set_message("Joining");
         let frame_w = self.args.capture_frames.to_string().len();
@@ -164,5 +176,45 @@ impl Vcs {
         }
         let w = self.capture_width?;
         Some(format!("scale{w}:-1:flags=bicubic"))
+    }
+
+    /// In the cases we failed to extract every expect frame it may be possible to cover
+    /// a small amount of these by duplicating the previous frame. This case should be rare.
+    fn check_extract(&self, extract: &ExtractData, temp_dir: &Path) -> anyhow::Result<usize> {
+        /// Max number of fixes per template
+        const MAX_FIXES: usize = 6;
+
+        let mut total_fixes = 0;
+
+        // ensure all captures exist
+        for tmpl in &extract.out_templates {
+            let mut first = temp_dir.to_path_buf();
+            first.push(tmpl.with_frame(1));
+            ensure!(
+                first.is_file(),
+                "Failed to extract: {}",
+                shell_escape::escape(first.display().to_string().into())
+            );
+
+            let mut prev = first;
+            let mut fixes = 0;
+            for f in 2..=self.args.capture_frames {
+                let mut next = temp_dir.to_path_buf();
+                next.push(tmpl.with_frame(f));
+                if !next.is_file() {
+                    ensure!(
+                        fixes < MAX_FIXES,
+                        "Failed to extract (too many to fix): {}",
+                        shell_escape::escape(next.display().to_string().into())
+                    );
+                    fs::copy(&prev, &next)?;
+                    fixes += 1;
+                }
+                prev = next;
+            }
+            total_fixes += fixes;
+        }
+
+        Ok(total_fixes)
     }
 }
