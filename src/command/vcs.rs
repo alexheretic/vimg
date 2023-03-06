@@ -1,5 +1,5 @@
 use crate::{
-    command::{self, label, sh_escape},
+    command::{self, label, sh_escape, sh_escape_filename},
     process::CommandExt,
 };
 use anyhow::ensure;
@@ -159,7 +159,7 @@ impl Vcs {
             o
         });
 
-        spinner.set_message(format!("Encoding {}", sh_escape(&out_file)));
+        spinner.set_message(format!("Encoding {}", sh_escape_filename(&out_file)));
         let out = Command::new("ffmpeg")
             .arg2("-r", self.avif_fps)
             .arg2("-i", {
