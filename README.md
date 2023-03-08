@@ -2,14 +2,20 @@
 CLI for video images. Generate animated video contact sheets fast.
 Uses _ffmpeg_.
 
+![](bbb.1080p.avif)
+
 ### Command: vcs
 Create a new contact sheet for a video.
 
 Extracts capture frames and joins into sheet(s) then encodes into an animated, or static, vcs avif.
 
+***Note: Support for animated avif isn't everywhere yet, try chrom{e,ium}***
+
 ```
 vimg vcs [OPTIONS] -c <COLUMNS> -H <CAPTURE_HEIGHT> -n <NUMBER> <VIDEO>
 ```
+
+See [examples](examples.md).
 
 ### Command: extract
 Extract capture bmp images from a video using ffmpeg.
