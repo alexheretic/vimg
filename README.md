@@ -33,11 +33,11 @@ vimg join [OPTIONS] --columns <COLUMNS> --output <OUTPUT> <CAPTURE_IMAGES>...
 
 ## Install
 <!--### Arch Linux
-Available in the [AUR](https://aur.archlinux.org/packages/vimg).
+Available in the [AUR](https://aur.archlinux.org/packages/vimg).-->
 
 ### Windows
 Pre-built **vimg.exe** included in the [latest release](https://github.com/alexheretic/vimg/releases/latest).
--->
+
 ### Using cargo
 Latest release
 ```sh
