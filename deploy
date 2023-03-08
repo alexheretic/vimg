@@ -7,6 +7,6 @@ cargo +nightly fmt -- --check
 
 cargo build --release
 
-cp "${CARGO_TARGET_DIR:-./target}/release/ab-vimg" ~/bin/ab-vimg
+cp "${CARGO_TARGET_DIR:-./target}/release/vimg" ~/bin/vimg
 
-ls -lh ~/bin/ab-vimg
+ls -lh ~/bin/vimg

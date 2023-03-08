@@ -6,7 +6,10 @@ use anyhow::ensure;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use std::{path::PathBuf, process::Command, time::Duration};
 
-/// Create a new video contact sheet.
+/// Create a new contact sheet for a video.
+///
+/// Extracts capture frames and joins into sheet(s) then encodes into
+/// an animated, or static, vcs avif.
 #[derive(clap::Parser, Debug, Clone)]
 #[group(skip)]
 pub struct Vcs {

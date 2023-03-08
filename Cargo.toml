@@ -1,9 +1,9 @@
 [package]
-name = "ab-vimg"
+name = "vimg"
 version = "0.1.0"
 authors = ["Alex Butler <alexheretic@gmail.com>"]
 edition = "2021"
-description = "Animated video contact sheet (vcs) cli"
+description = "CLI for video images. Generates animated video contact sheets fast."
 
 [dependencies]
 anyhow = "1.0.69"
