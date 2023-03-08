@@ -16,6 +16,6 @@ jobs:
     - uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/release/ab-av1.exe
+        file: target/release/vimg.exe
         tag: ${{ github.ref }}
         overwrite: true

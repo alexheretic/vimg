@@ -9,7 +9,7 @@ keywords = ["vcs"]
 license = "MIT"
 readme = "README.md"
 # Don't bloat package with example images
-exclude = ["**.avif"]
+exclude = ["**.avif", ".github"]
 
 [dependencies]
 anyhow = "1.0.69"
