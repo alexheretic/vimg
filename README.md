@@ -31,13 +31,13 @@ Join same-sized capture images into a single grid image.
 vimg join [OPTIONS] --columns <COLUMNS> --output <OUTPUT> <CAPTURE_IMAGES>...
 ```
 
-<!--## Install
-### Arch Linux
+## Install
+<!--### Arch Linux
 Available in the [AUR](https://aur.archlinux.org/packages/vimg).
 
 ### Windows
 Pre-built **vimg.exe** included in the [latest release](https://github.com/alexheretic/vimg/releases/latest).
-
+-->
 ### Using cargo
 Latest release
 ```sh
@@ -47,7 +47,7 @@ cargo install vimg
 Latest code direct from git
 ```sh
 cargo install --git https://github.com/alexheretic/vimg
-``` -->
+``` 
 
 ### Requirements
 **ffmpeg** that's not too old should be in `$PATH`.
