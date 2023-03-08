@@ -8,6 +8,8 @@ repository = "https://github.com/alexheretic/vimg"
 keywords = ["vcs"]
 license = "MIT"
 readme = "README.md"
+# Don't bloat package with example images
+exclude = ["**.avif"]
 
 [dependencies]
 anyhow = "1.0.69"
