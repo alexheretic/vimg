@@ -1,4 +1,5 @@
 # vimg examples
+Note: Support for animated avif isn't everywhere yet, try viewing with chrom{e,ium}.
 
 ## Example: Animated 1080p vcs
 Defaut args produce a 30 frame 1.5s capture played back at 10fps.
