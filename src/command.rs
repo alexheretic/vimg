@@ -1,9 +1,11 @@
 mod extract;
 mod join;
+mod print_completions;
 mod vcs;
 
 pub use extract::*;
 pub use join::*;
+pub use print_completions::*;
 pub use vcs::*;
 
 use std::{fmt, str::FromStr};

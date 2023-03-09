@@ -9,6 +9,7 @@ enum Command {
     Vcs(command::Vcs),
     Join(command::Join),
     Extract(command::Extract),
+    PrintCompletions(command::PrintCompletions),
 }
 
 fn main() -> anyhow::Result<()> {
@@ -23,6 +24,7 @@ fn main() -> anyhow::Result<()> {
                 eprintln!("Warning: {msg}");
             }
         }
+        Command::PrintCompletions(c) => c.run(),
     }
 
     Ok(())
