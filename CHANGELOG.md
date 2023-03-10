@@ -1,4 +1,4 @@
-# Unreleased (v0.1.1)
+# v0.1.1
 * Add `print-completions` command.
 
 # v0.1.0
