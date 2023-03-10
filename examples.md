@@ -23,7 +23,7 @@ Using a single capture frame `-f1` results in a still/static vcs.
 7 columns & 35 captures results in close to 21:9 ultrawide resolution grid.
 
 ```
-vimg vcs -c7 -n35 -H288 -f1 --avif-fps=20 bbb.mkv
+vimg vcs -c7 -n35 -H288 -f1 bbb.mkv
 ```
 
 -> [bbb.wide.avif](bbb.wide.avif)
