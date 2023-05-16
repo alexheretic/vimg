@@ -1,5 +1,6 @@
 mod command;
 mod process;
+mod temporary;
 
 use clap::Parser;
 
@@ -13,9 +14,22 @@ enum Command {
 }
 
 fn main() -> anyhow::Result<()> {
-    let action = Command::parse();
+    let cmd = Command::parse();
 
-    match action {
+    _ = ctrlc::set_handler(|| {
+        temporary::clean();
+        std::process::exit(1);
+    });
+
+    let result = run(cmd);
+
+    temporary::clean();
+
+    result
+}
+
+fn run(cmd: Command) -> anyhow::Result<()> {
+    match cmd {
         Command::Vcs(c) => c.run()?,
         Command::Join(c) => c.run()?,
         Command::Extract(c) => {

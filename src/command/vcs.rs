@@ -1,6 +1,7 @@
 use crate::{
     command::{self, label, sh_escape, sh_escape_filename},
     process::CommandExt,
+    temporary,
 };
 use anyhow::ensure;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
@@ -74,17 +75,9 @@ impl Vcs {
             .output_dir
             .clone()
             .unwrap_or_else(|| PathBuf::from("."));
-        let temp_dir = tempfile::tempdir_in(&parent_dir)?;
-        let temp_kept;
-        let temp_dir = match self.keep {
-            true => {
-                temp_kept = temp_dir.into_path(); // don't delete temp_dir on drop
-                temp_kept.as_path()
-            }
-            false => temp_dir.path(),
-        };
+        let temp_dir = temporary::process_dir(self.args.output_dir.clone(), !self.keep);
 
-        self.args.output_dir = Some(temp_dir.to_path_buf());
+        self.args.output_dir = Some(temp_dir.clone());
         self.args.capture_frames = self.args.capture_frames.or(Some(30));
 
         let ex_scale = self.extract_scale();
@@ -102,7 +95,7 @@ impl Vcs {
         if self.keep {
             spinner.println(format!(
                 "Keeping temporary files in {}",
-                sh_escape(temp_dir)
+                sh_escape(&temp_dir)
             ));
         }
 
@@ -156,6 +149,13 @@ impl Vcs {
                 .run()
             })?;
 
+        // write to temp location until successful
+        let temp_out_file = {
+            let mut o = temp_dir.clone();
+            o.push(format!("{file_prefix}.avif"));
+            o
+        };
+        // output file if successful
         let out_file = self.output.unwrap_or_else(|| {
             let mut o = parent_dir;
             o.push(format!("{file_prefix}.avif"));
@@ -166,7 +166,7 @@ impl Vcs {
         let out = Command::new("ffmpeg")
             .arg2("-r", self.avif_fps)
             .arg2("-i", {
-                let mut o = temp_dir.to_path_buf();
+                let mut o = temp_dir;
                 o.push(format!("{file_prefix}-%0{frame_w}d.bmp"));
                 o
             })
@@ -182,13 +182,15 @@ impl Vcs {
             .arg2("-crf", self.avif_crf)
             .arg2("-pix_fmt", "yuv420p10le")
             .arg("-y")
-            .arg(out_file)
+            .arg(&temp_out_file)
             .output()?;
         ensure!(
             out.status.success(),
             "ffmpeg convert-to-avif failed\n---stderr---\n{}\n------",
             String::from_utf8_lossy(&out.stderr).trim(),
         );
+
+        std::fs::rename(temp_out_file, out_file)?;
 
         spinner.finish();
         Ok(())
