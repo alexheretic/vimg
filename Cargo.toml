@@ -26,9 +26,6 @@ once_cell = "1.17.1"
 rayon = "1.6.1"
 shell-escape = "0.1.5"
 
-[profile.dev.package."*"]
-opt-level = 3
-
 [profile.release]
 lto = true
 strip = true
