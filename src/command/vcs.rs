@@ -5,7 +5,7 @@ use crate::{
 };
 use anyhow::ensure;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
-use std::{path::PathBuf, process::Command, time::Duration};
+use std::{fs, path::PathBuf, process::Command, time::Duration};
 
 /// Create a new contact sheet for a video.
 ///
@@ -190,7 +190,8 @@ impl Vcs {
             String::from_utf8_lossy(&out.stderr).trim(),
         );
 
-        std::fs::rename(temp_out_file, out_file)?;
+        fs::rename(&temp_out_file, &out_file)
+            .or_else(|_| fs::copy(&temp_out_file, &out_file).map(|_| ()))?;
 
         spinner.finish();
         Ok(())
