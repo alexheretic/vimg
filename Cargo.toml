@@ -16,7 +16,7 @@ anyhow = "1.0.69"
 clap = { version = "4.1.8", features = ["derive", "env", "wrap_help"] }
 clap_complete = "4.1.4"
 ctrlc = { version = "3.2.5", features = ["termination"] }
-fastrand = "1.9.0"
+fastrand = "2"
 ffprobe = "0.3.3"
 glyph_brush_layout = "0.2.3"
 humantime = "2.1"
