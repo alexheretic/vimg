@@ -202,6 +202,6 @@ impl Vcs {
             return Some(format!("scale=-1:{h}:flags=bicubic"));
         }
         let w = self.capture_width?;
-        Some(format!("scale{w}:-1:flags=bicubic"))
+        Some(format!("scale={w}:-1:flags=bicubic"))
     }
 }

@@ -1,3 +1,7 @@
+# Unreleased (v0.1.3)
+* Fix `vcs` `-W` ffmpeg vfilter bug.
+* Fix label background pixel oob panic.
+
 # v0.1.2
 * Cleanup temp dir on error / ctrl-c.
 
