@@ -93,9 +93,9 @@ pub fn draw(
             b
         })
     {
-        let max_x = b.max.x.ceil() as u32;
+        let max_x = (b.max.x.ceil() as u32).min(rgba.width() - 1);
         let min_x = b.min.x as u32;
-        let max_y = b.max.y.ceil() as u32;
+        let max_y = (b.max.y.ceil() as u32).min(rgba.height() - 1);
         let min_y = b.min.y as u32;
 
         for x in min_x..=max_x {
