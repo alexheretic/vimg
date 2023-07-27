@@ -1,6 +1,6 @@
 [package]
 name = "vimg"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Alex Butler <alexheretic@gmail.com>"]
 edition = "2021"
 description = "CLI for video images. Generates animated video contact sheets fast."
