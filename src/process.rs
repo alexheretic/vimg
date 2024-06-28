@@ -1,5 +1,6 @@
 use std::{borrow::Cow, ffi::OsStr, sync::Arc};
 
+#[allow(dead_code)]
 pub trait CommandExt {
     /// Adds an argument if `condition` otherwise noop.
     fn arg_if(&mut self, condition: bool, a: impl ArgString) -> &mut Self;
