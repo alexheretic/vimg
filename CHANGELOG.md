@@ -1,3 +1,6 @@
+# v0.1.4
+* Update dependencies.
+
 # v0.1.3
 * Fix `vcs` `-W` ffmpeg vfilter bug.
 * Fix label background pixel oob panic.
