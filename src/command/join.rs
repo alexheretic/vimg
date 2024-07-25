@@ -81,7 +81,7 @@ impl Join {
 
     fn load_image(&self, path: impl AsRef<Path>) -> anyhow::Result<image::DynamicImage> {
         let path = path.as_ref();
-        let mut img = image::io::Reader::open(path)?.decode()?;
+        let mut img = image::ImageReader::open(path)?.decode()?;
 
         if self.capture_width.is_some() || self.capture_height.is_some() {
             img = img.resize(

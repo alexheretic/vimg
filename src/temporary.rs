@@ -1,7 +1,10 @@
-use once_cell::sync::Lazy;
-use std::{env, fs, iter, path::PathBuf, sync::Mutex};
+use std::{
+    env, fs, iter,
+    path::PathBuf,
+    sync::{LazyLock, Mutex},
+};
 
-static TO_REMOVE: Lazy<Mutex<Option<PathBuf>>> = Lazy::new(<_>::default);
+static TO_REMOVE: LazyLock<Mutex<Option<PathBuf>>> = LazyLock::new(<_>::default);
 
 /// Remove [`process_dir`] if exists and set to auto-delete when created.
 pub fn clean() {
@@ -16,7 +19,7 @@ pub fn clean() {
 ///
 /// `delete_on_exit`: If true on first call auto delete this dir on process exit.
 pub fn process_dir(conf_parent: Option<PathBuf>, delete_on_exit: bool) -> PathBuf {
-    static SUBDIR: Lazy<String> = Lazy::new(|| {
+    static SUBDIR: LazyLock<String> = LazyLock::new(|| {
         let mut subdir = String::from(".vimg-");
         subdir.extend(iter::repeat_with(fastrand::alphanumeric).take(12));
         subdir
