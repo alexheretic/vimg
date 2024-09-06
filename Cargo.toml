@@ -28,3 +28,6 @@ shell-escape = "0.1.5"
 [profile.release]
 lto = true
 strip = true
+
+[lints.rust]
+unused_crate_dependencies = "deny"
