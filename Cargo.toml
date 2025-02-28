@@ -2,7 +2,7 @@
 name = "vimg"
 version = "0.1.4"
 authors = ["Alex Butler <alexheretic@gmail.com>"]
-edition = "2021"
+edition = "2024"
 description = "CLI for video images. Generates animated video contact sheets fast."
 repository = "https://github.com/alexheretic/vimg"
 keywords = ["vcs"]

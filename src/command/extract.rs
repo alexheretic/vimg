@@ -1,8 +1,8 @@
 use crate::{
-    command::{sh_escape, DurationOrPercent, HumanDuration},
+    command::{DurationOrPercent, HumanDuration, sh_escape},
     process::CommandExt,
 };
-use anyhow::{ensure, Context};
+use anyhow::{Context, ensure};
 use rayon::prelude::*;
 use std::{
     fmt, fs,

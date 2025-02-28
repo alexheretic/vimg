@@ -1,6 +1,6 @@
 use glyph_brush_layout::{
-    ab_glyph::{point, Font, FontRef, PxScale, Rect},
     GlyphPositioner, HorizontalAlign, SectionGeometry, SectionText, VerticalAlign,
+    ab_glyph::{Font, FontRef, PxScale, Rect, point},
 };
 use image::Pixel;
 

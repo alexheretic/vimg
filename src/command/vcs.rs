@@ -65,8 +65,7 @@ impl Vcs {
         ensure!(
             self.output
                 .as_ref()
-                .map_or(true, |p| p.extension().and_then(|e| e.to_str())
-                    == Some("avif")),
+                .is_none_or(|p| p.extension().and_then(|e| e.to_str()) == Some("avif")),
             "output must be avif"
         );
 
