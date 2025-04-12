@@ -26,7 +26,11 @@ pub struct Vcs {
     #[arg(long, default_value_t = 30)]
     pub avif_crf: u8,
 
-    /// svt-av1 preset for encoding the output avif.
+    /// Ffmpeg vcodec to use for encoding the output avif.
+    #[arg(long, default_value = "libsvtav1")]
+    pub avif_codec: String,
+
+    /// Preset (or "cpu-used" for libaom-av1) for encoding the output avif.
     ///
     /// Default 1 for single-frame, 6 for multi-frame.
     #[arg(long)]
@@ -169,9 +173,12 @@ impl Vcs {
                 o.push(format!("{file_prefix}-%0{frame_w}d.bmp"));
                 o
             })
-            .arg2("-c:v", "libsvtav1")
+            .arg2("-c:v", &self.avif_codec)
             .arg2(
-                "-preset",
+                match self.avif_codec.as_str() {
+                    "libaom-av1" => "-cpu-used",
+                    _ => "-preset",
+                },
                 self.avif_preset
                     .unwrap_or(match self.args.capture_frames() {
                         1 => 1,
