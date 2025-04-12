@@ -1,3 +1,6 @@
+# Unreleased
+* Use libsvtav1 to encode avifs instead of libaom-av1, speeds up encoding.
+
 # v0.1.4
 * Update dependencies.
 
