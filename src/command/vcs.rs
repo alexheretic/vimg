@@ -38,10 +38,10 @@ pub struct Vcs {
 
     /// Output avif framerate for multi-frame outputs.
     ///
-    /// Example: The default 10fps will result in half-speed playback for
-    /// the default args: -f30 -t1500ms (30 frames over 1.5 seconds).
-    /// So using 20fps will result in realtime playback for: -f30 -t1500ms.
-    #[arg(long, default_value_t = 10.0)]
+    /// Example: The default 20fps will result in real time playback for
+    /// the default args: -f30 -t1500ms (30 frames over a 1.5s duration).
+    /// So using 10fps will result in half-time playback for: -f30 -t1500ms.
+    #[arg(long, default_value_t = 20.0)]
     pub avif_fps: f32,
 
     /// Pixel width of each capture inside the grid. Will be scaled preserving aspect.

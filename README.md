@@ -2,7 +2,7 @@
 CLI for video images. Generate animated video contact sheets fast.
 Uses _ffmpeg_.
 
-![](https://raw.githubusercontent.com/alexheretic/vimg/main/bbb.1080p.avif)
+![](https://raw.githubusercontent.com/alexheretic/vimg/main/bbb.540p.avif)
 
 _Note: Support for animated avif isn't everywhere yet, try viewing with firefox/chromium._
 
