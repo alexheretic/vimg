@@ -1,4 +1,4 @@
-# Unreleased (v0.2.0)
+# v0.2.0
 * Use svt-av1 to encode avifs instead of aom-av1, speeds up encoding.
 * By default use svt-av1 preset 6 for multi-frame avifs.
 * Add `vcs` option `--avif-codec VCODEC` for specifying the ffmpeg vcodec for encoding the output avif,
