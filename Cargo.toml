@@ -21,7 +21,7 @@ ffprobe = "0.4"
 glyph_brush_layout = "0.2.3"
 humantime = "2.1"
 image = "0.25.2"
-indicatif = "0.17.3"
+indicatif = "0.18"
 rayon = "1.6.1"
 shell-escape = "0.1.5"
 
