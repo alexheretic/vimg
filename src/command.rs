@@ -77,10 +77,11 @@ impl fmt::Display for HumanDuration {
     }
 }
 
-pub fn sh_escape(path: &std::path::Path) -> std::borrow::Cow<str> {
+pub fn sh_escape(path: &std::path::Path) -> std::borrow::Cow<'_, str> {
     shell_escape::escape(path.display().to_string().into())
 }
-pub fn sh_escape_filename(path: &std::path::Path) -> std::borrow::Cow<str> {
+
+pub fn sh_escape_filename(path: &std::path::Path) -> std::borrow::Cow<'_, str> {
     let filename = path
         .file_name()
         .and_then(|f| f.to_str())
