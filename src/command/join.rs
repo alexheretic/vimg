@@ -56,7 +56,7 @@ impl Join {
         } else {
             let images = n_captures;
             let mut rows = images / columns;
-            if images % columns != 0 {
+            if !images.is_multiple_of(*columns) {
                 rows += 1;
             }
             (rows, *columns)
